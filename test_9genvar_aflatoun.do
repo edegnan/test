@@ -703,32 +703,29 @@ foreach macro in saving_behavior end_saving_behavior ///
 					}
 				}
 		 }
- 		* Find mean of standardized vars for full sample, ignoring missing values in individual vars
+ 		* Find mean of standardized vars for full sample, ignoring missing values in individual vars (main indices table)
 		tempvar index_mean_all index_mean_app index_mean_fs index_mi 
-		egen `index_mean_all'=rowmean($`macro'_all_index)
+		qui egen `index_mean_all'=rowmean($`macro'_all_index)
 
-		
-		* Replace mean to missing if one or more standardized vars missing (main table)
+		* Replace mean to missing if one or more standardized vars missing (first indices appendix table)
 		qui egen `index_mi' = rowmiss($`macro'_all_index)
 		gen `index_mean_app' = `index_mean_all'
 		replace `index_mean_app'=. if `index_mi'!=0
-		}
-		 
-		* Find mean of standardized vars for 5th and 7th grade sample, replace mean to missing if one or more standardized vars missing (appendix)
+		
+		* Find mean of standardized vars for 5th and 7th grade sample, ignoring missing values in individual vars (second indices appendix)
 		qui egen `index_mean_fs'=rowmean($`macro'_fs_index) if `fs'
 		
 		* Standardize MAIN INDEX
-		qui sum `index_mean_all' if treatment==0	
-			loc index_meanc r(mean)
-			loc index_sdc r(sd)
-		qui gen `macro'_all_index 	= (`index_mean_all'-`index_meanc')/`index_sdc'
-		sum `macro'_all_index 	if treatment==0
+			qui sum `index_mean_all' if treatment==0	
+				loc index_meanc r(mean)
+				loc index_sdc r(sd)
+			qui gen `macro'_all_index 	= (`index_mean_all'-`index_meanc')/`index_sdc'
+			sum `macro'_all_index 	if treatment==0
 
 			* Global for individual index appendix apps
 			global `macro'_all	"`macro'_all_index $`macro'"
 			display "$`macro'_all"
-		
-		/*
+
 		* Standardize APPENDIX INDEX 1 (missing if 1 or more individual vars missing))
 			qui sum `index_mean_app' if treatment==0 
 				loc index_meanc r(mean)
@@ -738,18 +735,16 @@ foreach macro in saving_behavior end_saving_behavior ///
 			* Global for individual index appendix tables - not needed for this version of tables
 			global `macro'_app 	"`macro'_app_index $`macro'"
 			display "$`macro'_app"
-		*/
 		
 		* Standardize APPENDIX INDEX 2 (5th and 7th grade subsample)
-		qui sum `index_mean_fs' if treatment==0 & `fs'	
-			loc index_meanc r(mean)
-			loc index_sdc r(sd)
-		qui gen `macro'_fs_index = (`index_mean_fs'-`index_meanc')/`index_sdc'
-		sum `macro'_fs_index  	if treatment==0
-		
-		* Global for individual index appendix apps; would still need to restrict sample to 5th and 7th in regression
-		global `macro'_fs	"`macro'_fs_index $`macro'"
-		display "$`macro'_fs"
+			qui sum `index_mean_fs' if treatment==0 & `fs'	
+				loc index_meanc r(mean)
+				loc index_sdc r(sd)
+			qui gen `macro'_fs_index = (`index_mean_fs'-`index_meanc')/`index_sdc'
+			sum `macro'_fs_index  	if treatment==0
+			* Global for individual index appendix apps; would still need to restrict sample to 5th and 7th in regression
+			global `macro'_fs	"`macro'_fs_index $`macro'"
+			display "$`macro'_fs"
 
 			
 		drop __*
